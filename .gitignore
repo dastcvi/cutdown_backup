@@ -1,4 +1,3 @@
-*.xml
-*.cproj
+# Build directories
 [Dd]ebug/
 [Rr]elease/
