@@ -13,6 +13,16 @@
 #define SPI_DRIVER_H_
 
 #include <stdint.h>
+#include <stdbool.h>
+
+/* this typedef is matched in the main MCU's driver */
+typedef enum {
+	CMD_EMPTY = 0x00,
+	RD_TIMER_HI = 0x01,
+	RD_TIMER_LO = 0x02,
+	WR_TIMER_HI = 0x03,
+	WR_TIMER_LO = 0x04,
+} SPI_Command_t;
 
 void init_spi_slave(void);
 
