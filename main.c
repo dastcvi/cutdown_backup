@@ -12,17 +12,14 @@
 
 int main(void)
 {
-	_SFR_BYTE(DDRB) |= 1 << DDB3; /* Configure PB3 as output */
-	_SFR_BYTE(PORTB) |= 1 << PB3; /* Write PB3 high */
+	_SFR_BYTE(DDRB) |= 1 << DDB4; /* Configure PB4 as output */
+	_SFR_BYTE(PORTB) &= ~(1 << PB4); /* Write PB4 high */
+	
+	init_spi_slave();
 	
 	/* enable interrupts */
 	sei();
 	
-	init_spi_slave();
-	
-    /* Replace with your application code */
-    while (1) 
-    {
-    }
+    while (1);
 }
 

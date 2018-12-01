@@ -12,6 +12,7 @@
 #ifndef SPI_DRIVER_H_
 #define SPI_DRIVER_H_
 
+#include <stdint.h>
 
 void init_spi_slave(void);
 

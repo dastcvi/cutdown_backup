@@ -12,13 +12,13 @@ void init_spi_slave(void)
 {
 	/* set DO to output */
 	_SFR_BYTE(DDRB) |= 1 << DDB1;     /* Configure PB1 (DO) as output */
-	_SFR_BYTE(PORTB) &= ~(1 << PB3);  /* Write DO low */
+	_SFR_BYTE(PORTB) &= ~(1 << PB1);  /* Write DO low */
 	
 	/* set to 3-wire mode */
 	_SFR_BYTE(USICR) |= 1 << USIWM0;
 	_SFR_BYTE(USICR) &= ~(1 << USIWM1);
 	
-	/* set to external clock (ie. slave) */
+	/* set to external clock (ie. slave) in SPI mode 0 */
 	_SFR_BYTE(USICR) |= 1 << USICS1;
 	_SFR_BYTE(USICR) &= ~(1 << USICS0);
 	_SFR_BYTE(USICR) &= ~(1 << USICLK);
@@ -36,6 +36,12 @@ ISR (USI_OVF_vect)
 	_SFR_BYTE(USISR) |= 1 << USIOIF;
 	
 	_SFR_BYTE(USIDR) = 0;
+	
+	if ((1<<PB4) == (_SFR_BYTE(PORTB) & (1<<PB4))) {
+		_SFR_BYTE(PORTB) &= ~(1 << PB4); /* Write PB4 low */
+	} else {
+		_SFR_BYTE(PORTB) |= 1 << PB4; /* Write PB4 high */
+	}
 }
 
 /* ISR for counter overflow
