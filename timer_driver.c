@@ -6,13 +6,14 @@
  */ 
 
 #include "timer_driver.h"
+#include "spi_driver.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
 /* note: the system clock is shipped with a default of the 8 MHz internal RC prescaled down to 1 MHz */
 
-volatile uint16_t timer_value = 0;
-volatile bool timer_enable = false;
+volatile bool system_armed = false;
+volatile bool timer_expired = false;
 
 void init_timer(void)
 {
@@ -31,64 +32,27 @@ void init_timer(void)
 	_SFR_BYTE(TCCR1) |= 0b1110; /* select CS1[3:0] = 0b1110 => CK/8192 prescale */
 }
 
-void set_timer_hi(uint8_t value)
+void arm_timer(void)
 {
-	cli();
-	timer_value &= (uint16_t) 0x00ff;
-	timer_value |= ((uint16_t) value) << 8;
-	sei();
+	system_armed = true;
 }
 
-void set_timer_lo(uint8_t value)
+void disarm_timer(void)
 {
-	cli();
-	timer_value &= (uint16_t) 0xff00;
-	timer_value |= (uint16_t) value;
-	sei();
+	system_armed = false;
 }
 
-uint16_t read_timer(void)
+bool arm_status(void)
 {
-	uint16_t value = 0;
-	
-	cli();
-	value = timer_value;
-	sei();
-	
-	return value;
-}
-
-void enable_timer()
-{
-	cli();
-	timer_enable = true;
-	sei();
-}
-
-void disable_timer()
-{
-	cli();
-	timer_enable = false;
-	sei();
+	return system_armed;
 }
 
 ISR (TIMER1_COMPA_vect)
-{
-	static bool gpio = false;
-	
-	cli();
-	if (timer_enable) {
-		if (timer_value > 0) {
-			timer_value--;
+{	
+	if (system_armed) {
+		if (decrement_timer()) {
+			timer_expired = true;
+			system_armed = false;
 		}
-	}
-	sei();
-	
-	if (gpio) {
-		_SFR_BYTE(PORTB) &= ~(1 << PB4); /* Write PB4 low */
-		gpio = false;
-	} else {
-		_SFR_BYTE(PORTB) |= 1 << PB4;
-		gpio = true;
 	}
 }

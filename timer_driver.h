@@ -12,13 +12,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+extern volatile bool timer_expired;
+
 void init_timer(void);
 
-void set_timer_hi(uint8_t value);
-void set_timer_lo(uint8_t value);
-uint16_t read_timer(void);
-
-void enable_timer();
-void disable_timer();
+void arm_timer(void);
+void disarm_timer(void);
+bool arm_status(void);
 
 #endif /* TIMER_DRIVER_H_ */

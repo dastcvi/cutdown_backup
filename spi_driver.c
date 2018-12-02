@@ -6,12 +6,14 @@
  */ 
 
 #include "spi_driver.h"
+#include "timer_driver.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+uint16_t cutdown_timer = 0;
 bool write_timer_hi = false;
 bool write_timer_lo = false;
-uint16_t timer_value = 0x4281;
+
 
 void init_spi_slave(void)
 {
@@ -35,6 +37,28 @@ void init_spi_slave(void)
 	_SFR_BYTE(USISR) |= 1 << USIOIF;
 }
 
+uint16_t read_timer(void)
+{
+	uint16_t value = 0;
+	
+	cli();
+	value = cutdown_timer;
+	sei();
+	
+	return value;
+}
+
+bool decrement_timer(void)
+{
+	bool expired = false;
+	
+	cli();
+	if (--cutdown_timer == 0) expired = true;
+	sei();
+	
+	return expired;
+}
+
 ISR (USI_OVF_vect)
 {
 	uint8_t command = 0;
@@ -42,23 +66,27 @@ ISR (USI_OVF_vect)
 	command = _SFR_BYTE(USIDR);
 	
 	if (write_timer_lo) {
-		timer_value &= 0xFF00; /* clear lo */
-		timer_value |= command;
+		cli();
+		cutdown_timer &= 0xFF00; /* clear lo */
+		cutdown_timer |= command;
 		write_timer_lo = false;
+		sei();
 	} else if (write_timer_hi) {
-		timer_value &= 0x00FF; /* clear hi */
-		timer_value |= ((uint16_t) command) << 8;
+		cli();
+		cutdown_timer &= 0x00FF; /* clear hi */
+		cutdown_timer |= ((uint16_t) command) << 8;
 		write_timer_hi = false;
+		sei();
 	} else {
 		switch (command) {
 		case CMD_EMPTY:
 			_SFR_BYTE(USIDR) = 0;
 			break;
 		case RD_TIMER_HI:
-			_SFR_BYTE(USIDR) = timer_value >> 8;
+			_SFR_BYTE(USIDR) = cutdown_timer >> 8;
 			break;
 		case RD_TIMER_LO:
-			_SFR_BYTE(USIDR) = timer_value & 0xff;
+			_SFR_BYTE(USIDR) = cutdown_timer & 0xff;
 			break;
 		case WR_TIMER_LO:
 			write_timer_lo = true;
@@ -66,6 +94,14 @@ ISR (USI_OVF_vect)
 			break;
 		case WR_TIMER_HI:
 			write_timer_hi = true;
+			_SFR_BYTE(USIDR) = 0;
+			break;
+		case CMD_ARM:
+			arm_timer();
+			_SFR_BYTE(USIDR) = 0;
+			break;
+		case CMD_DISARM:
+			disarm_timer();
 			_SFR_BYTE(USIDR) = 0;
 			break;
 		default:
