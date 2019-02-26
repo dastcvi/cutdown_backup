@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+extern volatile bool system_armed;
 extern volatile bool timer_expired;
 
 void init_timer(void);

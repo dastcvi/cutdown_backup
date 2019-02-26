@@ -10,10 +10,11 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-uint16_t cutdown_timer = 0;
+volatile uint16_t cutdown_timer = 0;
 bool write_timer_hi = false;
 bool write_timer_lo = false;
 
+volatile bool update_eeprom = false;
 
 void init_spi_slave(void)
 {
@@ -35,6 +36,13 @@ void init_spi_slave(void)
 	
 	/* clear the counter */
 	_SFR_BYTE(USISR) |= 1 << USIOIF;
+}
+
+void set_timer(uint16_t timer)
+{
+	cli();
+	cutdown_timer = timer;
+	sei();
 }
 
 uint16_t read_timer(void)
@@ -66,17 +74,25 @@ ISR (USI_OVF_vect)
 	command = _SFR_BYTE(USIDR);
 	
 	if (write_timer_lo) {
-		cli();
-		cutdown_timer &= 0xFF00; /* clear lo */
-		cutdown_timer |= command;
+		/* ignore command if armed */
+		if (!system_armed) {
+			cli();
+			cutdown_timer &= 0xFF00; /* clear lo */
+			cutdown_timer |= command;
+			sei();
+		}
 		write_timer_lo = false;
-		sei();
+		_SFR_BYTE(USIDR) = 0;
 	} else if (write_timer_hi) {
-		cli();
-		cutdown_timer &= 0x00FF; /* clear hi */
-		cutdown_timer |= ((uint16_t) command) << 8;
+		/* ignore command if armed */
+		if (!system_armed) {
+			cli();
+			cutdown_timer &= 0x00FF; /* clear hi */
+			cutdown_timer |= ((uint16_t) command) << 8;
+			sei();
+		}
 		write_timer_hi = false;
-		sei();
+		_SFR_BYTE(USIDR) = 0;
 	} else {
 		switch (command) {
 		case CMD_EMPTY:
@@ -96,12 +112,11 @@ ISR (USI_OVF_vect)
 			write_timer_hi = true;
 			_SFR_BYTE(USIDR) = 0;
 			break;
-		case CMD_ARM:
-			arm_timer();
-			_SFR_BYTE(USIDR) = 0;
-			break;
-		case CMD_DISARM:
-			disarm_timer();
+		case WR_TIMER_EEPROM:
+			/* ignore command if armed */
+			if (!system_armed) {
+				update_eeprom = true;
+			}
 			_SFR_BYTE(USIDR) = 0;
 			break;
 		default:

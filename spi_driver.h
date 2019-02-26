@@ -22,11 +22,15 @@ typedef enum {
 	RD_TIMER_LO = 0x02,
 	WR_TIMER_HI = 0x03,
 	WR_TIMER_LO = 0x04,
-	CMD_ARM = 0x05,		/* software workaround for hardware error (arming signal same as SCK, had initially intended UART, not SPI) */
-	CMD_DISARM = 0x06,
+	WR_TIMER_EEPROM = 0x05,
 } SPI_Command_t;
 
+extern volatile bool update_eeprom;
+
 void init_spi_slave(void);
+
+/* only for reboot update from EEPROM */
+void set_timer(uint16_t timer);
 
 uint16_t read_timer(void);
 bool decrement_timer(void);
