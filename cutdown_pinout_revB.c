@@ -25,13 +25,13 @@ bool check_arm_status(void)
 
 void fire_squib(void)
 {
-	volatile uint16_t iter = 0;
+	volatile uint32_t iter = 0;
 	
 	/* write squib gate high */
 	_SFR_BYTE(PORTB) |= (1 << PB4);
 	
-	/* wait for ~1s */
-	for (iter = 0; iter < 40000; iter++);
+	/* wait for ~10s */
+	for (iter = 0; iter < 400000; iter++);
 	
 	/* write squib gate low */
 	_SFR_BYTE(PORTB) &= ~(1 << PB4);

@@ -74,7 +74,7 @@ void armed(void)
 
 void fire(void)
 {
-	/* check if the primary MCU has fired a squib before firing the backup */
+	/* ensure still armed */
 	if (check_arm_status()) {
 		fire_squib();
 	}
