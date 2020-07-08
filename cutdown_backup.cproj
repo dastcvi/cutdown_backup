@@ -137,6 +137,18 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="eeprom_driver.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="eeprom_driver.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="cutdown_pinout_revB.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="cutdown_pinout_revB.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
